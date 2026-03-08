@@ -17,9 +17,77 @@ const TONGUE_AXES = [
   'Reach', 'Grip Strength', 'Sensitivity', 'Escape Diff'
 ];
 
+const TRANSLATIONS = {
+  en: {
+    title: 'PREDATOR STATS SHEET',
+    charName: 'CHARACTER NAME',
+    uploadImage: 'CLICK TO UPLOAD IMAGE',
+    clickToChange: 'CLICK TO CHANGE',
+    physDesc: 'Physical Description',
+    mainInfo: 'Main Information',
+    predHistory: 'Predator History',
+    predAlignment: 'Predator Alignment',
+    bellyType: 'Belly Type',
+    ratio: 'Prey/Pred Ratio',
+    fatality: 'Fatality %',
+    preyPref: 'Prey Preferences',
+    preySize: 'Preferred Prey Size',
+    consStyle: 'Consumption Style',
+    swallowMethod: 'Swallow Method',
+    postMeal: 'Post-Meal Behavior',
+    behaviorTitle: 'PREDATOR BEHAVIOR',
+    capabilityTitle: 'PREDATOR CAPABILITY',
+    tongueTitle: '👅 TONGUE PROFILE',
+    tongueType: 'Tongue Type',
+    tongueTypePH: 'e.g. long, forked, thick...',
+    specialTraits: 'Special Traits',
+    specialTraitsPH: 'e.g. prehensile, glowing...',
+    exportBtn: '⬇ Export as PNG',
+    physDescPH: 'Enter physical description...',
+    mainInfoPH: 'Enter main information...',
+    predHistoryPH: 'Enter predator history...',
+    behaviorAxes: ['Attention', 'Willingness', 'Severity', 'Confidence', 'Morality', 'Experience', 'Pleasure', 'Danger'],
+    capabilityAxes: ['Max Capacity', 'Digestive Control', 'Stomach Resilience', 'Acid Power', 'Digestion Speed', 'Metabolism Efficiency', 'Appetite', 'Comfort'],
+    tongueAxes: ['Length', 'Thickness', 'Viscosity', 'Dexterity', 'Reach', 'Grip Strength', 'Sensitivity', 'Escape Diff'],
+  },
+  es: {
+    title: 'FICHA DE ESTADÍSTICAS',
+    charName: 'NOMBRE DEL PERSONAJE',
+    uploadImage: 'CLICK PARA SUBIR IMAGEN',
+    clickToChange: 'CLICK PARA CAMBIAR',
+    physDesc: 'Descripción Física',
+    mainInfo: 'Información Principal',
+    predHistory: 'Historia del Predador',
+    predAlignment: 'Alineamiento',
+    bellyType: 'Tipo de Barriga',
+    ratio: 'Ratio Presa/Pred',
+    fatality: '% Fatalidad',
+    preyPref: 'Preferencias de Presa',
+    preySize: 'Tamaño de Presa Preferido',
+    consStyle: 'Estilo de Consumo',
+    swallowMethod: 'Método de Trago',
+    postMeal: 'Comportamiento Post-Comida',
+    behaviorTitle: 'COMPORTAMIENTO',
+    capabilityTitle: 'CAPACIDADES',
+    tongueTitle: '👅 PERFIL DE LENGUA',
+    tongueType: 'Tipo de Lengua',
+    tongueTypePH: 'ej. larga, bífida, gruesa...',
+    specialTraits: 'Rasgos Especiales',
+    specialTraitsPH: 'ej. prensil, brillante...',
+    exportBtn: '⬇ Exportar como PNG',
+    physDescPH: 'Escribe la descripción física...',
+    mainInfoPH: 'Escribe la información principal...',
+    predHistoryPH: 'Escribe la historia del predador...',
+    behaviorAxes: ['Atención', 'Disposición', 'Severidad', 'Confianza', 'Moralidad', 'Experiencia', 'Placer', 'Peligro'],
+    capabilityAxes: ['Cap. Máxima', 'Control Digestivo', 'Resist. Estomacal', 'Poder Ácido', 'Vel. Digestión', 'Efic. Metabólica', 'Apetito', 'Comodidad'],
+    tongueAxes: ['Longitud', 'Grosor', 'Viscosidad', 'Destreza', 'Alcance', 'Fuerza de Agarre', 'Sensibilidad', 'Dif. de Escape'],
+  }
+};
+
 const initGrades = axes => Object.fromEntries(axes.map(a => [a, 'F']));
 
-function RadarChart({ axes, values, onChange, accentColor, bgColor }) {
+
+function RadarChart({ axes, displayAxes, values, onChange, accentColor }) {
   const [hoveredAxis, setHoveredAxis] = useState(null);
   const [hoveredGrade, setHoveredGrade] = useState(null);
   const size = 340;
@@ -141,7 +209,7 @@ function RadarChart({ axes, values, onChange, accentColor, bgColor }) {
       {/* Axis labels */}
       {axes.map((ax, i) => {
         const [lx, ly] = labelOffset(i);
-        const words = ax.split(' ');
+        const words = (displayAxes ? displayAxes[i] : ax).split(' ');
         return (
           <text key={i} x={lx} y={ly} textAnchor="middle"
             fill="white" fontSize={9.5} fontFamily="'Black Ops One', monospace"
@@ -165,7 +233,7 @@ function RadarChart({ axes, values, onChange, accentColor, bgColor }) {
             fill="#000000cc" stroke={accentColor} strokeWidth={1} />
           <text x={cx} y={cy + 2} textAnchor="middle"
             fill={accentColor} fontSize={11} fontFamily="'Black Ops One', monospace">
-            {axes[hoveredAxis]}: {GRADES[hoveredGrade]}
+            {displayAxes ? displayAxes[hoveredAxis] : axes[hoveredAxis]}: {GRADES[hoveredGrade]}
           </text>
         </g>
       )}
@@ -173,11 +241,11 @@ function RadarChart({ axes, values, onChange, accentColor, bgColor }) {
   );
 }
 
-function GradeRow({ label, value, onChange, color }) {
+function GradeRow({ label, displayLabel, value, onChange, color }) {
   return (
     <div style={{ marginBottom: 8 }}>
       <div style={{ color: '#9ca3af', fontSize: 9, fontFamily: "'Black Ops One', monospace", marginBottom: 3, letterSpacing: 0.5 }}>
-        {label}
+        {displayLabel || label}
       </div>
       <div style={{ display: 'flex', gap: 3 }}>
         {GRADES.map(g => (
@@ -200,7 +268,7 @@ function GradeRow({ label, value, onChange, color }) {
   );
 }
 
-function EditableField({ label, value, onChange, rows = 3 }) {
+function EditableField({ label, value, onChange, rows = 3, placeholder }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{
@@ -226,7 +294,7 @@ function EditableField({ label, value, onChange, rows = 3 }) {
           resize: 'vertical', outline: 'none',
           lineHeight: 1.5,
         }}
-        placeholder={`Enter ${label.toLowerCase()}...`}
+        placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
       />
     </div>
   );
@@ -252,6 +320,8 @@ export default function PredatorStatsSheet() {
   const [preySize, setPreySize] = useState('');
   const [image, setImage] = useState(null);
   const [charName, setCharName] = useState('');
+  const [lang, setLang] = useState('en');
+  const T = TRANSLATIONS[lang];
   const updateTongue = useCallback((ax, g) => setTongueVals(v => ({ ...v, [ax]: g })), []);
   const fileRef = useRef();
 
@@ -289,29 +359,15 @@ export default function PredatorStatsSheet() {
     const doExport = () => {
       const el = sheetRef.current;
       window.scrollTo(0, 0);
-
-      // Forzar layout desktop temporalmente
-      const prevWidth = el.style.width;
-      const prevMinWidth = el.style.minWidth;
-      el.style.width = '1100px';
-      el.style.minWidth = '1100px';
-
-      setTimeout(() => {
-        window.htmlToImage.toPng(el, {
-          pixelRatio: 2,
-          backgroundColor: '#0a0a0a',
-          width: 1100,
-        }).then(dataUrl => {
-          // Restaurar
-          el.style.width = prevWidth;
-          el.style.minWidth = prevMinWidth;
-
-          const link = document.createElement('a');
-          link.download = `${charName || 'predator'}-stats.png`;
-          link.href = dataUrl;
-          link.click();
-        });
-      }, 150); // pequeño delay para que el DOM se repinte con el nuevo ancho
+      window.htmlToImage.toPng(el, {
+        pixelRatio: 2,
+        backgroundColor: '#0a0a0a',
+      }).then(dataUrl => {
+        const link = document.createElement('a');
+        link.download = `${charName || 'predator'}-stats.png`;
+        link.href = dataUrl;
+        link.click();
+      });
     };
 
     if (window.htmlToImage) {
@@ -350,20 +406,31 @@ export default function PredatorStatsSheet() {
           `,
           backgroundBlendMode: 'normal',
         }}>
-          {/* Title */}
-          <div style={{
-            textAlign: 'center', fontSize: 18, color: 'white',
-            fontFamily: "'Black Ops One', monospace",
-            textShadow: '2px 2px 0 #7f1d1d, 0 0 20px #ef444488',
-            marginBottom: 12, letterSpacing: 2,
-          }}>
-            PREDATOR STATS SHEET
+          {/* Title + lang toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{
+              fontSize: 18, color: 'white',
+              fontFamily: "'Black Ops One', monospace",
+              textShadow: '2px 2px 0 #7f1d1d, 0 0 20px #ef444488',
+              letterSpacing: 2,
+            }}>
+              {T.title}
+            </div>
+            <button onClick={() => setLang(l => l === 'en' ? 'es' : 'en')} style={{
+              fontFamily: "'Black Ops One', monospace",
+              fontSize: 11, letterSpacing: 1,
+              color: '#ef4444', background: 'transparent',
+              border: '1px solid #7f1d1d', borderRadius: 4,
+              padding: '3px 8px', cursor: 'pointer',
+            }}>
+              {lang === 'en' ? '🌐 ES' : '🌐 EN'}
+            </button>
           </div>
 
           {/* Character name */}
           <div style={{ marginBottom: 10 }}>
             <input value={charName} onChange={e => setCharName(e.target.value)}
-              placeholder="CHARACTER NAME"
+              placeholder={T.charName}
               style={{
                 ...inputStyle, textAlign: 'center',
                 fontFamily: "'Black Ops One', monospace",
@@ -390,7 +457,7 @@ export default function PredatorStatsSheet() {
               : <div style={{ textAlign: 'center', color: '#4b1010' }}>
                 <div style={{ fontSize: 32, marginBottom: 6 }}>⬆</div>
                 <div style={{ fontSize: 10, fontFamily: "'Black Ops One', monospace", letterSpacing: 1 }}>
-                  CLICK TO UPLOAD IMAGE
+                  {T.uploadImage}
                 </div>
               </div>
             }
@@ -401,16 +468,16 @@ export default function PredatorStatsSheet() {
                 padding: '4px', fontSize: 9, color: '#ef4444',
                 fontFamily: "'Black Ops One', monospace",
               }}>
-                CLICK TO CHANGE
+                {T.clickToChange}
               </div>
             )}
           </div>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleImage}
             style={{ display: 'none' }} />
 
-          <EditableField label="Physical Description" value={physDesc} onChange={setPhysDesc} rows={3} />
-          <EditableField label="Main Information" value={mainInfo} onChange={setMainInfo} rows={3} />
-          <EditableField label="Predator History" value={history} onChange={setHistory} rows={3} />
+          <EditableField label={T.physDesc} value={physDesc} onChange={setPhysDesc} rows={3} placeholder={T.physDescPH} />
+          <EditableField label={T.mainInfo} value={mainInfo} onChange={setMainInfo} rows={3} placeholder={T.mainInfoPH} />
+          <EditableField label={T.predHistory} value={history} onChange={setHistory} rows={3} placeholder={T.predHistoryPH} />
 
           {/* Bottom stats grid */}
           <div style={{
@@ -419,15 +486,15 @@ export default function PredatorStatsSheet() {
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px'
           }}>
             {[
-              ['Predator Alignment', alignment, setAlignment],
-              ['Belly Type', bellyType, setBellyType],
-              ['Prey/Pred Ratio', ratio, setRatio],
-              ['Fatality %', fatality, setFatality],
-              ['Prey Preferences', preyPref, setPreyPref],
-              ['Preferred Prey Size', preySize, setPreySize],
-              ['Consumption Style', style, setStyle],
-              ['Swallow Method', swallowMethod, setSwallowMethod],
-              ['Post-Meal Behavior', postMeal, setPostMeal],
+              [T.predAlignment, alignment, setAlignment],
+              [T.bellyType, bellyType, setBellyType],
+              [T.ratio, ratio, setRatio],
+              [T.fatality, fatality, setFatality],
+              [T.preyPref, preyPref, setPreyPref],
+              [T.preySize, preySize, setPreySize],
+              [T.consStyle, style, setStyle],
+              [T.swallowMethod, swallowMethod, setSwallowMethod],
+              [T.postMeal, postMeal, setPostMeal],
             ].map(([lbl, val, set]) => (
               <div key={lbl}>
                 <div style={panelLabel}>{lbl}</div>
@@ -454,13 +521,13 @@ export default function PredatorStatsSheet() {
               textShadow: '2px 2px 0 #1e40af, 0 0 15px #3b82f688',
               marginBottom: 8, letterSpacing: 2,
             }}>
-              PREDATOR BEHAVIOR
+              {T.behaviorTitle}
             </div>
-            <RadarChart axes={BEHAVIOR_AXES} values={behaviorVals}
+            <RadarChart axes={BEHAVIOR_AXES} displayAxes={T.behaviorAxes} values={behaviorVals}
               onChange={updateBehavior} accentColor="#60a5fa" bgColor="#1e3a5f" />
             <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
-              {BEHAVIOR_AXES.map(ax => (
-                <GradeRow key={ax} label={ax} value={behaviorVals[ax]}
+              {BEHAVIOR_AXES.map((ax, i) => (
+                <GradeRow key={ax} label={ax} displayLabel={T.behaviorAxes[i]} value={behaviorVals[ax]}
                   onChange={updateBehavior} color="#60a5fa" />
               ))}
             </div>
@@ -479,13 +546,13 @@ export default function PredatorStatsSheet() {
               textShadow: '2px 2px 0 #166534, 0 0 15px #4ade8088',
               marginBottom: 8, letterSpacing: 2,
             }}>
-              PREDATOR CAPABILITY
+              {T.capabilityTitle}
             </div>
-            <RadarChart axes={CAPABILITY_AXES} values={capabilityVals}
+            <RadarChart axes={CAPABILITY_AXES} displayAxes={T.capabilityAxes} values={capabilityVals}
               onChange={updateCapability} accentColor="#4ade80" bgColor="#14532d" />
             <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
-              {CAPABILITY_AXES.map(ax => (
-                <GradeRow key={ax} label={ax} value={capabilityVals[ax]}
+              {CAPABILITY_AXES.map((ax, i) => (
+                <GradeRow key={ax} label={ax} displayLabel={T.capabilityAxes[i]} value={capabilityVals[ax]}
                   onChange={updateCapability} color="#4ade80" />
               ))}
             </div>
@@ -504,20 +571,20 @@ export default function PredatorStatsSheet() {
               textShadow: '2px 2px 0 #9d174d, 0 0 15px #f472b688',
               marginBottom: 8, letterSpacing: 2,
             }}>
-              TONGUE PROFILE
+              {T.tongueTitle}
             </div>
-            <RadarChart axes={TONGUE_AXES} values={tongueVals}
+            <RadarChart axes={TONGUE_AXES} displayAxes={T.tongueAxes} values={tongueVals}
               onChange={updateTongue} accentColor="#f472b6" bgColor="#831843" />
             <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px', marginBottom: 12 }}>
-              {TONGUE_AXES.map(ax => (
-                <GradeRow key={ax} label={ax} value={tongueVals[ax]}
+              {TONGUE_AXES.map((ax, i) => (
+                <GradeRow key={ax} label={ax} displayLabel={T.tongueAxes[i]} value={tongueVals[ax]}
                   onChange={updateTongue} color="#f472b6" />
               ))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
               {[
-                ['Tongue Type', tongueType, setTongueType, 'e.g. long, forked, thick...'],
-                ['Special Traits', tongueTraits, setTongueTraits, 'e.g. prehensile, glowing...']
+                [T.tongueType, tongueType, setTongueType, T.tongueTypePH],
+                [T.specialTraits, tongueTraits, setTongueTraits, T.specialTraitsPH],
               ].map(([lbl, val, set, ph]) => (
                 <div key={lbl}>
                   <div style={{ fontFamily: "'Black Ops One', monospace", fontSize: 9, color: '#f472b6', letterSpacing: 1, marginBottom: 3, textTransform: 'uppercase' }}>
@@ -558,7 +625,7 @@ export default function PredatorStatsSheet() {
         onMouseEnter={e => e.target.style.boxShadow = '0 0 35px #ef4444aa, 0 4px 16px #00000088'}
         onMouseLeave={e => e.target.style.boxShadow = '0 0 20px #ef444466, 0 4px 12px #00000088'}
       >
-        ⬇ Export as PNG
+        {T.exportBtn}
       </button>
     </div>
   );
