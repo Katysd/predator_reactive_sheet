@@ -289,15 +289,29 @@ export default function PredatorStatsSheet() {
     const doExport = () => {
       const el = sheetRef.current;
       window.scrollTo(0, 0);
-      window.htmlToImage.toPng(el, {
-        pixelRatio: 2,
-        backgroundColor: '#0a0a0a',
-      }).then(dataUrl => {
-        const link = document.createElement('a');
-        link.download = `${charName || 'predator'}-stats.png`;
-        link.href = dataUrl;
-        link.click();
-      });
+
+      // Forzar layout desktop temporalmente
+      const prevWidth = el.style.width;
+      const prevMinWidth = el.style.minWidth;
+      el.style.width = '1100px';
+      el.style.minWidth = '1100px';
+
+      setTimeout(() => {
+        window.htmlToImage.toPng(el, {
+          pixelRatio: 2,
+          backgroundColor: '#0a0a0a',
+          width: 1100,
+        }).then(dataUrl => {
+          // Restaurar
+          el.style.width = prevWidth;
+          el.style.minWidth = prevMinWidth;
+
+          const link = document.createElement('a');
+          link.download = `${charName || 'predator'}-stats.png`;
+          link.href = dataUrl;
+          link.click();
+        });
+      }, 150); // pequeño delay para que el DOM se repinte con el nuevo ancho
     };
 
     if (window.htmlToImage) {
