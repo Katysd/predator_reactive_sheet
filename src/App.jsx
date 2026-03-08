@@ -500,11 +500,10 @@ export default function PredatorStatsSheet() {
                   onChange={updateTongue} color="#f472b6" />
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
               {[
                 ['Tongue Type', tongueType, setTongueType, 'e.g. long, forked, thick...'],
-                ['Special Traits', tongueTraits, setTongueTraits, 'e.g. prehensile, glowing...'],
-                ['Swallow Method', swallowMethod, setSwallowMethod, 'e.g. gulp, coil, drag...'],
+                ['Special Traits', tongueTraits, setTongueTraits, 'e.g. prehensile, glowing...']
               ].map(([lbl, val, set, ph]) => (
                 <div key={lbl}>
                   <div style={{ fontFamily: "'Black Ops One', monospace", fontSize: 9, color: '#f472b6', letterSpacing: 1, marginBottom: 3, textTransform: 'uppercase' }}>
