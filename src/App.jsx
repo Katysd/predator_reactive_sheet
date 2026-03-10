@@ -19,7 +19,7 @@ const TONGUE_AXES = [
 
 const TRANSLATIONS = {
   en: {
-    title: 'PREDATOR STATS SHEET',
+    title: 'PREDATOR STATS SHEET 1.04',
     charName: 'CHARACTER NAME',
     uploadImage: 'CLICK TO UPLOAD IMAGE',
     clickToChange: 'CLICK TO CHANGE',
@@ -51,7 +51,7 @@ const TRANSLATIONS = {
     tongueAxes: ['Length', 'Thickness', 'Viscosity', 'Dexterity', 'Reach', 'Grip Strength', 'Sensitivity', 'Escape Diff'],
   },
   es: {
-    title: 'FICHA DE ESTADÍSTICAS',
+    title: 'FICHA DE ESTADÍSTICAS 1.04',
     charName: 'NOMBRE DEL PERSONAJE',
     uploadImage: 'CLICK PARA SUBIR IMAGEN',
     clickToChange: 'CLICK PARA CAMBIAR',
