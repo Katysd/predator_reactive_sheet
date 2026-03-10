@@ -355,12 +355,15 @@ export default function PredatorStatsSheet() {
 
   const sheetRef = useRef();
 
+  const [exporting, setExporting] = useState(false);
+
   const downloadPNG = () => {
+    setExporting(true);
     const doExport = () => {
       const el = sheetRef.current;
       window.scrollTo(0, 0);
 
-      // Forzar layout desktop temporalmente
+      // Force desktop layout temporarily
       const prevWidth = el.style.width;
       const prevMinWidth = el.style.minWidth;
       el.style.width = '1100px';
@@ -372,16 +375,29 @@ export default function PredatorStatsSheet() {
           backgroundColor: '#0a0a0a',
           width: 1100,
         }).then(dataUrl => {
-          // Restaurar
           el.style.width = prevWidth;
           el.style.minWidth = prevMinWidth;
+          setExporting(false);
 
-          const link = document.createElement('a');
-          link.download = `${charName || 'predator'}-stats.png`;
-          link.href = dataUrl;
-          link.click();
+          // Try standard download first
+          try {
+            const link = document.createElement('a');
+            link.download = `${charName || 'predator'}-stats.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          } catch {
+            // Fallback for iOS/mobile: open in new tab
+            window.open(dataUrl, '_blank');
+          }
+        }).catch(err => {
+          el.style.width = prevWidth;
+          el.style.minWidth = prevMinWidth;
+          setExporting(false);
+          alert('Export failed: ' + err.message);
         });
-      }, 150); // pequeño delay para que el DOM se repinte con el nuevo ancho
+      }, 150);
     };
 
     if (window.htmlToImage) {
@@ -390,6 +406,10 @@ export default function PredatorStatsSheet() {
       const script = document.createElement('script');
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
       script.onload = doExport;
+      script.onerror = () => {
+        setExporting(false);
+        alert('Could not load export library. Check your internet connection.');
+      };
       document.head.appendChild(script);
     }
   };
@@ -622,24 +642,27 @@ export default function PredatorStatsSheet() {
       </div>
 
       {/* Download button */}
-      <button onClick={downloadPNG} style={{
+      <button onClick={downloadPNG} disabled={exporting} style={{
         marginTop: 20,
         padding: '12px 40px',
         fontFamily: "'Black Ops One', monospace",
         fontSize: 14, letterSpacing: 2,
         color: '#0a0a0a',
-        background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+        background: exporting
+          ? 'linear-gradient(135deg, #6b2222, #4a1515)'
+          : 'linear-gradient(135deg, #ef4444, #dc2626)',
         border: '2px solid #7f1d1d',
         borderRadius: 6,
-        cursor: 'pointer',
+        cursor: exporting ? 'not-allowed' : 'pointer',
         boxShadow: '0 0 20px #ef444466, 0 4px 12px #00000088',
         textTransform: 'uppercase',
         transition: 'all 0.2s',
+        opacity: exporting ? 0.7 : 1,
       }}
-        onMouseEnter={e => e.target.style.boxShadow = '0 0 35px #ef4444aa, 0 4px 16px #00000088'}
+        onMouseEnter={e => { if (!exporting) e.target.style.boxShadow = '0 0 35px #ef4444aa, 0 4px 16px #00000088'; }}
         onMouseLeave={e => e.target.style.boxShadow = '0 0 20px #ef444466, 0 4px 12px #00000088'}
       >
-        {T.exportBtn}
+        {exporting ? '⏳ Generating...' : T.exportBtn}
       </button>
     </div>
   );
