@@ -532,8 +532,13 @@ export default function PredatorStatsSheet() {
             ].map(([lbl, val, set]) => (
               <div key={lbl}>
                 <div style={panelLabel}>{lbl}</div>
-                <input value={val} onChange={e => set(e.target.value)}
-                  style={{ ...inputStyle, fontSize: 11 }} />
+                <textarea value={val} onChange={e => set(e.target.value)}
+                  rows={1}
+                  style={{
+                    ...inputStyle, fontSize: 11,
+                    resize: 'vertical',
+                    lineHeight: 1.4,
+                  }} />
               </div>
             ))}
           </div>
