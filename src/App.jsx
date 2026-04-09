@@ -400,18 +400,19 @@ export default function PredatorStatsSheet() {
   const downloadPNG = () => {
     setExporting(true);
     const doExport = () => {
-      const el = sheetRef.current;
-      window.scrollTo(0, 0);
+      // const el = sheetRef.current;
+      //window.scrollTo(0, 0);
 
-      // Force desktop layout temporarily
-      const prevWidth = el.style.width;
-      const prevMinWidth = el.style.minWidth;
-      el.style.width = '1100px';
-      el.style.minWidth = '1100px';
+      // // Force desktop layout temporarily
+      // const prevWidth = el.style.width;
+      // const prevMinWidth = el.style.minWidth;
+      // el.style.width = '1260px';
+      // el.style.minWidth = '1100px';
 
       setTimeout(() => {
         domToPng(document.querySelector('#root'), {
           scale: 2, // Para que la imagen se vea en alta resolución (super nítida)
+          width: 1300,
           features: {
             removeControlCharacters: true,
           }
@@ -420,34 +421,25 @@ export default function PredatorStatsSheet() {
           link.download = 'stats.png'
           link.href = dataUrl
           link.click()
-          el.style.width = prevWidth
-          el.style.minWidth = prevMinWidth
+          // el.style.width = prevWidth
+          // el.style.minWidth = prevMinWidth
           setExporting(false);
         })
       }, 150);
     };
 
-    if (true) {
-      doExport();
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
-      script.onload = doExport;
-      script.onerror = () => {
-        setExporting(false);
-        alert('Could not load export library. Check your internet connection.');
-      };
-      document.head.appendChild(script);
-    }
+    doExport();
   };
 
   return (
     <div style={{
       minHeight: '100vh',
+      minWidth: '1300px',
+      width: '1300px',
       background: '#0a0a0a',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      padding: '20px',
-      fontFamily: "'Black Ops One', monospace",
+      padding: '0px',
+      fontFamily: "'Black Ops One', monospace"
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
 
@@ -572,7 +564,7 @@ export default function PredatorStatsSheet() {
         </div>
 
         {/* ── RIGHT PANEL ── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
 
           {/* BEHAVIOR */}
           <div style={{
@@ -673,7 +665,7 @@ export default function PredatorStatsSheet() {
         </div>
 
         {/* ── RIGHT PANEL 2 ── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ width: 420, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
 
           {/* GULLET */}
           <div style={{
