@@ -2,34 +2,35 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [master]
+    branches: [master, beta]
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write # Required to push to the gh-pages branch
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node ⚙️
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install and Build
+      - name: Install and Build 🏗️
         run: |
           npm install
           npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: dist
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+          folder: dist # Your build output folder
+          branch: gh-pages # The branch where files will live
+          # If branch is beta, put in /beta folder. If master, put in root.
+          target-folder: ${{ github.ref_name == 'beta' && 'beta' || '' }}
+          # Only 'clean' (delete old files) when deploying master
+          clean: ${{ github.ref_name == 'master' }}
