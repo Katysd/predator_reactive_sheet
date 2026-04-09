@@ -1,8 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Cambia 'predator-sheet' por el nombre exacto de tu repo de GitHub
+// Check if the branch being built is 'beta'
+const isBeta = process.env.GITHUB_REF_NAME === 'beta'
+
 export default defineConfig({
   plugins: [react()],
-  base: '/predator_reactive_sheet/',
+  // If it's beta, use the /beta/ subfolder; otherwise, use the root repo path
+  base: isBeta 
+    ? '/predator_reactive_sheet/beta/' 
+    : '/predator_reactive_sheet/',
 })
