@@ -1,8 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-
-const GRADES = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];
-const gradeToVal = g => GRADES.indexOf(g) + 1;
-const valToGrade = v => GRADES[Math.max(0, Math.min(6, v - 1))];
+import { domToPng } from 'modern-screenshot'
 
 const BEHAVIOR_AXES = [
   'Attention', 'Willingness', 'Severity', 'Confidence',
@@ -15,6 +12,27 @@ const CAPABILITY_AXES = [
 const TONGUE_AXES = [
   'Length', 'Thickness', 'Viscosity', 'Dexterity',
   'Reach', 'Grip Strength', 'Sensitivity', 'Escape Diff'
+];
+const GULLET_AXES = [
+  'Struggling Resistance',
+  'Travel Speed',
+  'Tightness',
+  'Swallowing Capacity',
+  'Swallowing Power',
+  'Uvula Sensitivity',
+  'Uvula Grippability',
+  'Uvula Size'
+];
+
+const STOMACH_AXES = [
+  'Capacity',
+  'Elasticity',
+  'Grip Strength',
+  'Acid Strength',
+  'Digestion Speed',
+  'Nutrient Absorption',
+  'Sensitivity',
+  'Fullness Display'
 ];
 
 const TRANSLATIONS = {
@@ -37,7 +55,9 @@ const TRANSLATIONS = {
     postMeal: 'Post-Meal Behavior',
     behaviorTitle: 'PREDATOR BEHAVIOR',
     capabilityTitle: 'PREDATOR CAPABILITY',
-    tongueTitle: '👅 TONGUE PROFILE',
+    tongueTitle: 'TONGUE PROFILE',
+    gulletTitle: 'GULLET PROFILE',
+    stomachTitle: 'STOMACH PROFILE',
     tongueType: 'Tongue Type',
     tongueTypePH: 'e.g. long, forked, thick...',
     specialTraits: 'Special Traits',
@@ -49,6 +69,8 @@ const TRANSLATIONS = {
     behaviorAxes: ['Attention', 'Willingness', 'Severity', 'Confidence', 'Morality', 'Experience', 'Pleasure', 'Danger'],
     capabilityAxes: ['Max Capacity', 'Digestive Control', 'Stomach Resilience', 'Acid Power', 'Digestion Speed', 'Metabolism Efficiency', 'Appetite', 'Comfort'],
     tongueAxes: ['Length', 'Thickness', 'Viscosity', 'Dexterity', 'Reach', 'Grip Strength', 'Sensitivity', 'Escape Diff'],
+    gulletAxes: ['Struggling Resistance', 'Travel Speed', 'Tightness', 'Swallowing Capacity', 'Swallowing Power', 'Uvula Sensitivity', 'Uvula Grippability', 'Uvula Size'],
+    stomachAxes: ['Capacity', 'Elasticity', 'Grip Strength', 'Acid Strength', 'Digestion Speed', 'Nutrient Absorption', 'Sensitivity', 'Fullness Display']
   },
   es: {
     title: 'FICHA DE ESTADÍSTICAS 1.04',
@@ -69,7 +91,9 @@ const TRANSLATIONS = {
     postMeal: 'Comportamiento Post-Comida',
     behaviorTitle: 'COMPORTAMIENTO',
     capabilityTitle: 'CAPACIDADES',
-    tongueTitle: '👅 PERFIL DE LENGUA',
+    tongueTitle: 'PERFIL DE LENGUA',
+    gulletTitle: 'PERFIL DE GARGANTA',
+    stomachTitle: 'PERFIL DE ESTOMAGO',
     tongueType: 'Tipo de Lengua',
     tongueTypePH: 'ej. larga, bífida, gruesa...',
     specialTraits: 'Rasgos Especiales',
@@ -81,10 +105,16 @@ const TRANSLATIONS = {
     behaviorAxes: ['Atención', 'Disposición', 'Severidad', 'Confianza', 'Moralidad', 'Experiencia', 'Placer', 'Peligro'],
     capabilityAxes: ['Cap. Máxima', 'Control Digestivo', 'Resist. Estomacal', 'Poder Ácido', 'Vel. Digestión', 'Efic. Metabólica', 'Apetito', 'Comodidad'],
     tongueAxes: ['Longitud', 'Grosor', 'Viscosidad', 'Destreza', 'Alcance', 'Fuerza de Agarre', 'Sensibilidad', 'Dif. de Escape'],
+    gulletAxes: ['Resistencia al Forcejeo', 'Velocidad de Desplazamiento', 'Ajuste', 'Capacidad de Ingesta', 'Potencia de Deglución', 'Sensibilidad de la Úvula', 'Agarre de la Úvula', 'Tamaño de la Úvula'],
+    stomachAxes: ['Capacidad', 'Elasticidad', 'Fuerza de Agarre', 'Potencia Ácida', 'Velocidad de Digestión', 'Absorción de Nutrientes', 'Sensibilidad', 'Visibilidad de Saciedad']
   }
 };
 
-const initGrades = axes => Object.fromEntries(axes.map(a => [a, 'F']));
+const GRADES = ['F', 'E', 'D', 'C', 'B', 'A', 'S'];
+
+const initGrades = axes => Object.fromEntries(
+  axes.map(a => [a, 0])
+);
 
 
 function RadarChart({ axes, displayAxes, values, onChange, accentColor }) {
@@ -96,6 +126,7 @@ function RadarChart({ axes, displayAxes, values, onChange, accentColor }) {
   const maxR = size / 2 - 55;
   const n = axes.length;
   const LEVELS = 7;
+
 
   const angleFor = i => (i / n) * 2 * Math.PI - Math.PI / 2;
 
@@ -111,11 +142,10 @@ function RadarChart({ axes, displayAxes, values, onChange, accentColor }) {
     return [cx + base * Math.cos(a), cy + base * Math.sin(a)];
   };
 
-  const dataPolyPoints = axes.map((ax, i) => ptFor(i, gradeToVal(values[ax])).join(',')).join(' ');
-  const gridLevels = GRADES.length;
+  const dataPolyPoints = axes.map((ax, i) => ptFor(i, Number(values[ax]) || 0).join(',')).join(' ');
 
   const handleTickClick = (axisIdx, gradeIdx) => {
-    onChange(axes[axisIdx], GRADES[gradeIdx]);
+    onChange(axes[axisIdx], gradeIdx + 1);
   };
 
   return (
@@ -153,7 +183,7 @@ function RadarChart({ axes, displayAxes, values, onChange, accentColor }) {
           const px2 = Math.sin(a) * perp;
           const py2 = -Math.cos(a) * perp;
           const isHovered = hoveredAxis === i && hoveredGrade === l;
-          const isCurrent = gradeToVal(values[axes[i]]) === l + 1;
+          const isCurrent = values[axes[i]] === l + 1;
           return (
             <g key={`${i}-${l}`}
               onClick={() => handleTickClick(i, l)}
@@ -194,13 +224,13 @@ function RadarChart({ axes, displayAxes, values, onChange, accentColor }) {
 
       {/* Data dots */}
       {axes.map((ax, i) => {
-        const [px, py] = ptFor(i, gradeToVal(values[ax]));
+        const [px, py] = ptFor(i, Number(values[ax]) || 0);
         return (
           <g key={i}>
             <circle cx={px} cy={py} r={6} fill={accentColor} stroke="white" strokeWidth={1.5} />
             <text x={px} y={py + 4} textAnchor="middle" fill="white" fontSize={7}
               fontFamily="monospace" fontWeight="bold">
-              {values[ax]}
+              {Number(values[ax]) || 0}
             </text>
           </g>
         );
@@ -225,44 +255,49 @@ function RadarChart({ axes, displayAxes, values, onChange, accentColor }) {
           </text>
         );
       })}
-
-      {/* Hover tooltip */}
-      {hoveredAxis !== null && hoveredGrade !== null && (
-        <g>
-          <rect x={cx - 35} y={cy - 14} width={70} height={22} rx={4}
-            fill="#000000cc" stroke={accentColor} strokeWidth={1} />
-          <text x={cx} y={cy + 2} textAnchor="middle"
-            fill={accentColor} fontSize={11} fontFamily="'Black Ops One', monospace">
-            {displayAxes ? displayAxes[hoveredAxis] : axes[hoveredAxis]}: {GRADES[hoveredGrade]}
-          </text>
-        </g>
-      )}
     </svg>
   );
 }
 
 function GradeRow({ label, displayLabel, value, onChange, color }) {
+  const handleChange = e => {
+    const v = parseFloat(e.target.value);
+    onChange(label, isNaN(v) ? 0 : v);
+  };
+
   return (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ color: '#9ca3af', fontSize: 9, fontFamily: "'Black Ops One', monospace", marginBottom: 3, letterSpacing: 0.5 }}>
+      <div style={{
+        color: '#9ca3af',
+        fontSize: 9,
+        fontFamily: "'Black Ops One', monospace",
+        marginBottom: 3,
+        letterSpacing: 0.5
+      }}>
         {displayLabel || label}
       </div>
-      <div style={{ display: 'flex', gap: 3 }}>
-        {GRADES.map(g => (
-          <button key={g} onClick={() => onChange(label, g)}
-            style={{
-              flex: 1, height: 22, cursor: 'pointer', border: 'none',
-              borderRadius: 3,
-              background: value === g ? color : '#1f2937',
-              color: value === g ? '#000' : '#6b7280',
-              fontSize: 10, fontWeight: 'bold',
-              fontFamily: "'Black Ops One', monospace",
-              transition: 'all 0.15s',
-              outline: value === g ? `1px solid ${color}` : '1px solid #374151',
-            }}>
-            {g}
-          </button>
-        ))}
+
+      <input
+        type="range"
+        min={0}
+        max={7}
+        step={0.01}
+        value={value}
+        onChange={handleChange}
+        style={{
+          width: '100%',
+          accentColor: color,
+          cursor: 'pointer'
+        }}
+      />
+
+      <div style={{
+        textAlign: 'right',
+        fontSize: 10,
+        color: color,
+        fontFamily: "'Black Ops One', monospace"
+      }}>
+        {Number(value || 0).toFixed(2)}
       </div>
     </div>
   );
@@ -303,6 +338,8 @@ function EditableField({ label, value, onChange, rows = 3, placeholder }) {
 export default function PredatorStatsSheet() {
   const [behaviorVals, setBehaviorVals] = useState(initGrades(BEHAVIOR_AXES));
   const [capabilityVals, setCapabilityVals] = useState(initGrades(CAPABILITY_AXES));
+  const [gulletVals, setGulletVals] = useState(initGrades(GULLET_AXES));
+  const [stomachVals, setStomachVals] = useState(initGrades(STOMACH_AXES));
   const [physDesc, setPhysDesc] = useState('');
   const [mainInfo, setMainInfo] = useState('');
   const [history, setHistory] = useState('');
@@ -327,6 +364,9 @@ export default function PredatorStatsSheet() {
 
   const updateBehavior = useCallback((ax, g) => setBehaviorVals(v => ({ ...v, [ax]: g })), []);
   const updateCapability = useCallback((ax, g) => setCapabilityVals(v => ({ ...v, [ax]: g })), []);
+
+  const updateGullet = useCallback((ax, g) => setGulletVals(v => ({ ...v, [ax]: g })), []);
+  const updateStomach = useCallback((ax, g) => setStomachVals(v => ({ ...v, [ax]: g })), []);
 
   const handleImage = e => {
     const file = e.target.files[0];
@@ -370,37 +410,24 @@ export default function PredatorStatsSheet() {
       el.style.minWidth = '1100px';
 
       setTimeout(() => {
-        window.htmlToImage.toPng(el, {
-          pixelRatio: 2,
-          backgroundColor: '#0a0a0a',
-          width: 1100,
-        }).then(dataUrl => {
-          el.style.width = prevWidth;
-          el.style.minWidth = prevMinWidth;
-          setExporting(false);
-
-          // Try standard download first
-          try {
-            const link = document.createElement('a');
-            link.download = `${charName || 'predator'}-stats.png`;
-            link.href = dataUrl;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } catch {
-            // Fallback for iOS/mobile: open in new tab
-            window.open(dataUrl, '_blank');
+        domToPng(document.querySelector('#root'), {
+          scale: 2, // Para que la imagen se vea en alta resolución (super nítida)
+          features: {
+            removeControlCharacters: true,
           }
-        }).catch(err => {
-          el.style.width = prevWidth;
-          el.style.minWidth = prevMinWidth;
+        }).then((dataUrl) => {
+          const link = document.createElement('a')
+          link.download = 'stats.png'
+          link.href = dataUrl
+          link.click()
+          el.style.width = prevWidth
+          el.style.minWidth = prevMinWidth
           setExporting(false);
-          alert('Export failed: ' + err.message);
-        });
+        })
       }, 150);
     };
 
-    if (window.htmlToImage) {
+    if (true) {
       doExport();
     } else {
       const script = document.createElement('script');
@@ -424,11 +451,11 @@ export default function PredatorStatsSheet() {
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
 
-      <div ref={sheetRef} style={{ display: 'flex', gap: 8, maxWidth: 1100, width: '100%' }}>
+      <div ref={sheetRef} style={{ display: 'flex', gap: 8, width: '100%' }}>
 
         {/* ── LEFT PANEL ── */}
         <div style={{
-          width: 320, flexShrink: 0,
+          width: 420, flexShrink: 0,
           background: 'linear-gradient(160deg, #2a0606 0%, #1a0303 40%, #2a0808 100%)',
           border: '3px solid #7f1d1d',
           borderRadius: 6, padding: 14,
@@ -639,6 +666,61 @@ export default function PredatorStatsSheet() {
                       outline: 'none', width: '100%', boxSizing: 'border-box'
                     }} />
                 </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── RIGHT PANEL 2 ── */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+          {/* GULLET */}
+          <div style={{
+            background: 'linear-gradient(135deg, #4d0023 0%, #340017 50%, #4d0023 100%)',
+            border: '3px solid #da0060',
+            borderRadius: 6, padding: '12px 14px',
+            boxShadow: '0 0 20px #da006044, inset 0 0 40px #00000055',
+          }}>
+            <div style={{
+              fontFamily: "'Black Ops One', monospace",
+              fontSize: 16, color: 'white',
+              textShadow: '2px 2px 0 #da0060, 0 0 15px #3b82f688',
+              marginBottom: 8, letterSpacing: 2,
+            }}>
+              {T.gulletTitle}
+            </div>
+            <RadarChart axes={GULLET_AXES} displayAxes={T.gulletAxes} values={gulletVals}
+              onChange={updateGullet} accentColor="#ad50b6" bgColor="#1e3a5f" />
+            <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
+              {GULLET_AXES.map((ax, i) => (
+                <GradeRow key={ax} label={ax} displayLabel={T.gulletAxes[i]} value={gulletVals[ax]}
+                  onChange={updateGullet} color="#ad50b6" />
+              ))}
+            </div>
+          </div>
+
+          {/* STOMACH */}
+          <div style={{
+            background: 'linear-gradient(135deg, #7b0023 0%, #3f0000 50%, #7b0023 100%)',
+            border: '3px solid #ff0a1a',
+            borderRadius: 6, padding: '12px 14px',
+            boxShadow: '0 0 20px #16a34a44, inset 0 0 40px #00000055',
+          }}>
+            <div style={{
+              fontFamily: "'Black Ops One', monospace",
+              fontSize: 16, color: 'white',
+              textShadow: '2px 2px 0 #166534, 0 0 15px #4ade8088',
+              marginBottom: 8, letterSpacing: 2,
+            }}>
+              {T.stomachTitle}
+            </div>
+            <RadarChart axes={STOMACH_AXES} displayAxes={T.stomachAxes} values={stomachVals}
+              onChange={updateStomach} accentColor="#ff0a1a" bgColor="#14532d" />
+            <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
+              {STOMACH_AXES.map((ax, i) => (
+                <GradeRow key={ax} label={ax} displayLabel={T.stomachAxes[i]} value={stomachVals[ax]}
+                  onChange={updateStomach} color="#ff3d3d" />
               ))}
             </div>
           </div>
